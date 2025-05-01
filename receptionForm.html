@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>来場受付フォーム</title>
+  <style>
+    .hidden { display: none; }
+    button { margin: 4px; }
+  </style>
+</head>
+<body>
+  <h1>受付フォーム</h1>
+  <form id="form">
+    <!-- 質問1：訪問種別選択 -->
+    <p>恐れ入りますが、以下の項目よりお選びください：</p>
+    <button type="button" onclick="selectType('guest')">ご来場の方はこちら</button>
+    <button type="button" onclick="selectType('delivery')">配送業者の方はこちら</button>
+
+    <!-- ご来場フォーム -->
+    <div id="guestForm" class="hidden">
+      <label>ご所属（会社名・団体名など）<br>
+        <input type="text" name="company" required>
+      </label><br><br>
+
+      <label>お名前（フルネーム）<br>
+        <input type="text" name="name" required>
+      </label><br><br>
+
+      <label>ご訪問の目的<br>
+        <select name="purpose" required>
+          <option value="打ち合わせ">打ち合わせ</option>
+          <option value="面接">面接</option>
+          <option value="ご挨拶">ご挨拶</option>
+          <option value="見学">見学</option>
+          <option value="その他">その他</option>
+        </select>
+      </label><br><br>
+    </div>
+
+    <!-- 配送フォーム -->
+    <div id="deliveryForm" class="hidden">
+      <p>スタッフの対応が必要なお荷物でしょうか？</p>
+      <label>
+        <input type="radio" name="delivery_type" value="宅配ボックスへの置き配でも大丈夫" required>
+        宅配ボックスへの置き配でも大丈夫
+      </label><br>
+      <label>
+        <input type="radio" name="delivery_type" value="スタッフの対応が必要" required>
+        スタッフの対応が必要
+      </label><br><br>
+    </div>
+
+    <input type="hidden" name="visitor_type" id="visitor_type">
+    <button type="submit" id="submitBtn" class="hidden">送信</button>
+  </form>
+
+  <p id="resultMsg"></p>
+
+  <script>
+    function selectType(type) {
+      document.getElementById("visitor_type").value = type;
+
+      document.getElementById("guestForm").classList.toggle("hidden", type !== "guest");
+      document.getElementById("deliveryForm").classList.toggle("hidden", type !== "delivery");
+      document.getElementById("submitBtn").classList.remove("hidden");
+    }
+
+    document.getElementById("form").addEventListener("submit", async function(e) {
+      e.preventDefault();
+
+      const formData = new FormData(this);
+      const params = new URLSearchParams(formData);
+
+      try {
+        await fetch("https://script.google.com/macros/s/AKfycby3gpXrCmugx_VfSWu-Fi6iVOgf97uocqfL8UDH-6WLKYM6X-ReHV2M755tkWJHpUNr/exec", {
+          method: "POST",
+          body: params
+        });
+
+        const visitorType = formData.get("visitor_type");
+        const deliveryType = formData.get("delivery_type");
+
+        const msg = document.getElementById("resultMsg");
+        if (visitorType === "guest") {
+          msg.textContent = "スタッフが参ります。しばらくお待ちください。";
+        } else {
+          if (deliveryType === "宅配ボックスへの置き配でも大丈夫") {
+            msg.textContent = "背後にございます宅配ボックスへ荷物を入れて、鍵をお閉めください。";
+          } else {
+            msg.textContent = "スタッフが参ります。しばらくお待ちください。";
+          }
+        }
+
+        this.reset();
+        document.getElementById("guestForm").classList.add("hidden");
+        document.getElementById("deliveryForm").classList.add("hidden");
+        document.getElementById("submitBtn").classList.add("hidden");
+      } catch (error) {
+        document.getElementById("resultMsg").textContent = "送信に失敗しました。もう一度お試しください。";
+        console.error(error);
+      }
+    });
+  </script>
+</body>
+</html>
